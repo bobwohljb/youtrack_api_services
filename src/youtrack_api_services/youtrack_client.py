@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -23,7 +24,10 @@ class YouTrackClient:
     @classmethod
     def from_settings(cls, settings: Optional[Settings] = None) -> "YouTrackClient":
         s = settings or Settings()
-        token = load_token(s.token_file)
+        # Prefer token from environment (loaded via .env) and fall back to file if missing
+        token = os.getenv("YOUTRACK_TOKEN") or ""
+        if not token:
+            token = load_token(s.token_file)
         return cls(base_url=s.base_url, token=token, fields=s.fields)
 
     @property

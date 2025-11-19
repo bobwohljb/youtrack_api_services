@@ -50,6 +50,15 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     df = pd.DataFrame(rows)
 
+    # Sort by created date (newest to oldest) before any formatting
+    # We expect `created` to be epoch milliseconds from YouTrack. If missing, skip sorting.
+    if not df.empty and "created" in df.columns:
+        # Convert to datetime for robust sorting; NaT values will be placed last
+        created_dt = pd.to_datetime(df["created"], unit="ms", errors="coerce")
+        df = df.assign(_created_dt=created_dt).sort_values(
+            by="_created_dt", ascending=False, na_position="last"
+        ).drop(columns=["_created_dt"])  # drop helper column
+
     # Keep only the required columns in the specified order, with formatting
     # 1) Build ticket hyperlink using the base URL and idReadable
     if not df.empty:

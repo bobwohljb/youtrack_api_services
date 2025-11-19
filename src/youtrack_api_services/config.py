@@ -1,13 +1,26 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
 from pathlib import Path
+
+# Optional import: allow running without python-dotenv installed
+try:
+    from dotenv import load_dotenv  # type: ignore
+except Exception:  # pragma: no cover - fallback when library isn't installed yet
+    def load_dotenv(*args, **kwargs):  # type: ignore
+        return False
+
+# Load environment variables from the project root .env, if present
+# Determine repository root as two levels up from this file's parent (…/src/youtrack_api_services/)
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(dotenv_path=_REPO_ROOT / ".env")
 
 
 @dataclass(frozen=True)
 class Settings:
     # Base configuration with sensible defaults; can be overridden by CLI
-    base_url: str = "https://youtrack.jetbrains.com"
+    base_url: str = field(default_factory=lambda: os.getenv("BASE_URL", "https://youtrack.jetbrains.com"))
 
     # Default tag and query parts per the issue description
     default_tag_label: str = "customer: Canva"
@@ -30,7 +43,7 @@ class Settings:
     )
 
     # Path to the file containing the YouTrack permanent token
-    token_file: Path = Path("../youtrack_api_token.txt")
+    token_file: Path = field(default_factory=lambda: _REPO_ROOT / "youtrack_api_token.txt")
 
 
 def build_default_query(tag_label: str | None = None,
